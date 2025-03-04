@@ -3,7 +3,6 @@ package payload
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 	"sync"
 	"testing"
 	"time"
@@ -51,7 +50,7 @@ func TestPayloadFeedIn(t *testing.T) {
 		should.Equal(test.packets[0].ft, ft)
 		should.Equal(test.packets[0].pt, pt)
 
-		b, err := ioutil.ReadAll(r)
+		b, err := io.ReadAll(r)
 		must.NoError(err)
 
 		must.Nil(r.Close())
@@ -232,7 +231,7 @@ func TestPayloadWaitNextClose(t *testing.T) {
 	err = p.FeedIn(bytes.NewReader([]byte("1:0")), false)
 	should.Equal(io.EOF, err)
 
-	err = p.FlushOut(ioutil.Discard)
+	err = p.FlushOut(io.Discard)
 	should.Equal(io.EOF, err)
 }
 
@@ -256,7 +255,7 @@ func TestPayloadWaitInOutClose(t *testing.T) {
 	go func() {
 		defer wg.Done()
 
-		err := p.FlushOut(ioutil.Discard)
+		err := p.FlushOut(io.Discard)
 		should.Equal(io.EOF, err)
 	}()
 
@@ -276,7 +275,7 @@ func TestPayloadWaitInOutClose(t *testing.T) {
 	err = p.FeedIn(bytes.NewReader([]byte("1:0")), false)
 	should.Equal(io.EOF, err)
 
-	err = p.FlushOut(ioutil.Discard)
+	err = p.FlushOut(io.Discard)
 	should.Equal(io.EOF, err)
 }
 
@@ -299,7 +298,7 @@ func TestPayloadPauseClose(t *testing.T) {
 	err = p.FeedIn(bytes.NewReader([]byte("1:0")), false)
 	should.Equal(io.EOF, err)
 
-	err = p.FlushOut(ioutil.Discard)
+	err = p.FlushOut(io.Discard)
 	should.Equal(io.EOF, err)
 }
 
@@ -399,7 +398,7 @@ func TestPayloadInOutPause(t *testing.T) {
 		}()
 		must.NoError(err)
 
-		_, err = io.Copy(ioutil.Discard, r)
+		_, err = io.Copy(io.Discard, r)
 		must.NoError(err)
 	}()
 
@@ -476,7 +475,7 @@ func TestPayloadNextClosePause(t *testing.T) {
 		defer wg.Done()
 
 		must := require.New(t)
-		err := p.FlushOut(ioutil.Discard)
+		err := p.FlushOut(io.Discard)
 		must.NoError(err)
 	}()
 

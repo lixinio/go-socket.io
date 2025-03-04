@@ -1,7 +1,7 @@
 package polling
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -79,7 +79,7 @@ func TestPollingBinary(t *testing.T) {
 
 			should.Equal(test.ft, ft)
 			should.Equal(test.pt, pt)
-			b, err := ioutil.ReadAll(r)
+			b, err := io.ReadAll(r)
 			should.Nil(err)
 			should.Equal(test.data, b)
 			err = r.Close()
@@ -111,7 +111,7 @@ func TestPollingBinary(t *testing.T) {
 		should.Nil(err)
 		should.Equal(test.ft, ft)
 		should.Equal(test.pt, pt)
-		b, err := ioutil.ReadAll(r)
+		b, err := io.ReadAll(r)
 		should.Nil(err)
 		err = r.Close()
 		should.Nil(err)
@@ -189,7 +189,7 @@ func TestPollingString(t *testing.T) {
 
 			should.Equal(test.ft, ft)
 			should.Equal(test.pt, pt)
-			b, err := ioutil.ReadAll(r)
+			b, err := io.ReadAll(r)
 			should.Nil(err)
 			err = r.Close()
 			should.Nil(err)
@@ -217,7 +217,7 @@ func TestPollingString(t *testing.T) {
 		should.Equal(test.ft, ft)
 		should.Equal(test.pt, pt)
 
-		b, err := ioutil.ReadAll(r)
+		b, err := io.ReadAll(r)
 		should.Nil(err)
 		should.Nil(r.Close())
 		should.Equal(test.data, b)

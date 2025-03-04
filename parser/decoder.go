@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"reflect"
 	"strings"
 
@@ -339,7 +338,7 @@ func (d *Decoder) readBuffer(ft session.FrameType, r io.ReadCloser) ([]byte, err
 		return nil, errInvalidBinaryBufferType
 	}
 
-	return ioutil.ReadAll(r)
+	return io.ReadAll(r)
 }
 
 func (d *Decoder) detachBuffer(v reflect.Value, buffers []Buffer) error {

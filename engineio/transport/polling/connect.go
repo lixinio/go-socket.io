@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -100,7 +99,7 @@ func (c *clientConn) servePost() {
 	req.Method = http.MethodPost
 
 	var buf bytes.Buffer
-	req.Body = ioutil.NopCloser(&buf)
+	req.Body = io.NopCloser(&buf)
 
 	query := reqUrl.Query()
 	for {
@@ -269,7 +268,7 @@ func (c *clientConn) serveGet() {
 }
 
 func discardBody(body io.ReadCloser) {
-	_, err := io.Copy(ioutil.Discard, body)
+	_, err := io.Copy(io.Discard, body)
 	if err != nil {
 		logger.Error("copy from body resp to discard:", err)
 	}
