@@ -1,6 +1,7 @@
 package socketio
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
@@ -100,9 +101,9 @@ func (s *Server) OnEvent(namespace, event string, f interface{}) {
 }
 
 // Serve serves go-socket.io server.
-func (s *Server) Serve() error {
+func (s *Server) Serve(ctx context.Context) error {
 	for {
-		conn, err := s.engine.Accept()
+		conn, err := s.engine.Accept(ctx)
 		//todo maybe need check EOF from Accept()
 		if err != nil {
 			return err

@@ -53,12 +53,16 @@ func (s *Server) Close() error {
 }
 
 // Accept accepts a connection.
-func (s *Server) Accept() (Conn, error) {
-	c := <-s.connChan
-	if c == nil {
-		return nil, io.EOF
+func (s *Server) Accept(ctx context.Context) (Conn, error) {
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case c := <-s.connChan:
+		if c == nil {
+			return nil, io.EOF
+		}
+		return c, nil
 	}
-	return c, nil
 }
 
 func (s *Server) Addr() net.Addr {
