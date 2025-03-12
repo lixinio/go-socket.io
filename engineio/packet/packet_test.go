@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/lixinio/go-socket.io/engineio/frame"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/googollee/go-socket.io/engineio/frame"
 )
 
 func TestPacketType(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		b       byte
 		fType   frame.Type
 		pType   Type

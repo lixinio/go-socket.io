@@ -2,13 +2,11 @@ package packet
 
 import (
 	"io"
-	"io/ioutil"
 	"testing"
 
+	"github.com/lixinio/go-socket.io/engineio/frame"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/googollee/go-socket.io/engineio/frame"
 )
 
 var tests = []struct {
@@ -73,7 +71,7 @@ func TestDecoder(t *testing.T) {
 				break
 			}
 
-			b, err := ioutil.ReadAll(fr)
+			b, err := io.ReadAll(fr)
 			must.NoError(err)
 
 			err = fr.Close()

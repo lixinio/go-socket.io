@@ -11,9 +11,8 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-
-	"github.com/googollee/go-socket.io/engineio/session"
-	"github.com/googollee/go-socket.io/engineio/transport"
+	"github.com/lixinio/go-socket.io/engineio/session"
+	"github.com/lixinio/go-socket.io/engineio/transport"
 )
 
 // Server is instance of server

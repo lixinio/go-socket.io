@@ -6,11 +6,11 @@ import (
 	"path"
 	"strings"
 
-	"github.com/googollee/go-socket.io/engineio"
-	"github.com/googollee/go-socket.io/engineio/transport"
-	"github.com/googollee/go-socket.io/engineio/transport/polling"
-	"github.com/googollee/go-socket.io/logger"
-	"github.com/googollee/go-socket.io/parser"
+	"github.com/lixinio/go-socket.io/engineio"
+	"github.com/lixinio/go-socket.io/engineio/transport"
+	"github.com/lixinio/go-socket.io/engineio/transport/websocket"
+	"github.com/lixinio/go-socket.io/logger"
+	"github.com/lixinio/go-socket.io/parser"
 )
 
 var EmptyAddrErr = errors.New("empty addr")
@@ -183,7 +183,6 @@ func (c *Client) clientWrite() {
 		if err := c.Close(); err != nil {
 			logger.Error("close connect:", err)
 		}
-
 	}()
 
 	for {

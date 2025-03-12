@@ -8,7 +8,7 @@ import (
 	"log"
 	"net/http"
 
-	socketio "github.com/googollee/go-socket.io"
+	socketio "github.com/lixinio/go-socket.io"
 )
 
 func main() {
@@ -67,7 +67,7 @@ package main
 
 import (
 	...
-	socketio "github.com/googollee/go-socket.io"
+	socketio "github.com/lixinio/go-socket.io"
 )
 
 func main() {

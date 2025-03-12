@@ -5,17 +5,16 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
 	"sync/atomic"
 
-	"github.com/googollee/go-socket.io/engineio/packet"
-	"github.com/googollee/go-socket.io/engineio/payload"
-	"github.com/googollee/go-socket.io/engineio/transport"
-	"github.com/googollee/go-socket.io/engineio/transport/utils"
-	"github.com/googollee/go-socket.io/logger"
+	"github.com/lixinio/go-socket.io/engineio/packet"
+	"github.com/lixinio/go-socket.io/engineio/payload"
+	"github.com/lixinio/go-socket.io/engineio/transport"
+	"github.com/lixinio/go-socket.io/engineio/transport/utils"
+	"github.com/lixinio/go-socket.io/logger"
 )
 
 type clientConn struct {
@@ -100,7 +99,7 @@ func (c *clientConn) servePost() {
 	req.Method = http.MethodPost
 
 	var buf bytes.Buffer
-	req.Body = ioutil.NopCloser(&buf)
+	req.Body = io.NopCloser(&buf)
 
 	query := reqUrl.Query()
 	for {
@@ -269,7 +268,7 @@ func (c *clientConn) serveGet() {
 }
 
 func discardBody(body io.ReadCloser) {
-	_, err := io.Copy(ioutil.Discard, body)
+	_, err := io.Copy(io.Discard, body)
 	if err != nil {
 		logger.Error("copy from body resp to discard:", err)
 	}

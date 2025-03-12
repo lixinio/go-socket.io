@@ -3,9 +3,8 @@ package packet
 import (
 	"testing"
 
+	"github.com/lixinio/go-socket.io/engineio/frame"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/googollee/go-socket.io/engineio/frame"
 )
 
 func TestEncoder(t *testing.T) {

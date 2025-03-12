@@ -5,12 +5,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"reflect"
 	"strings"
 
-	"github.com/googollee/go-socket.io/engineio/session"
-	"github.com/googollee/go-socket.io/logger"
+	"github.com/lixinio/go-socket.io/engineio/session"
+	"github.com/lixinio/go-socket.io/logger"
 )
 
 const (
@@ -127,8 +126,8 @@ func (d *Decoder) DecodeArgs(types []reflect.Type) ([]reflect.Value, error) {
 		return nil, err
 	}
 
-	//we can't use defer or call DiscardLast before decoding, because
-	//there are buffered readers involved and if we invoke .Close() json will encounter unexpected EOF.
+	// we can't use defer or call DiscardLast before decoding, because
+	// there are buffered readers involved and if we invoke .Close() json will encounter unexpected EOF.
 	_ = d.DiscardLast()
 
 	for i, typ := range types {
@@ -339,7 +338,7 @@ func (d *Decoder) readBuffer(ft session.FrameType, r io.ReadCloser) ([]byte, err
 		return nil, errInvalidBinaryBufferType
 	}
 
-	return ioutil.ReadAll(r)
+	return io.ReadAll(r)
 }
 
 func (d *Decoder) detachBuffer(v reflect.Value, buffers []Buffer) error {

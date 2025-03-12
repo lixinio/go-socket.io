@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/googollee/go-socket.io/engineio/session"
-	"github.com/googollee/go-socket.io/parser"
+	"github.com/lixinio/go-socket.io/engineio/session"
+	"github.com/lixinio/go-socket.io/parser"
 )
 
 type testStr struct {

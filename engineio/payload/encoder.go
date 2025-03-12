@@ -6,8 +6,8 @@ import (
 	"io"
 	"unicode/utf8"
 
-	"github.com/googollee/go-socket.io/engineio/frame"
-	"github.com/googollee/go-socket.io/engineio/packet"
+	"github.com/lixinio/go-socket.io/engineio/frame"
+	"github.com/lixinio/go-socket.io/engineio/packet"
 )
 
 type writerFeeder interface {
@@ -94,7 +94,6 @@ func (e *encoder) Close() error {
 }
 
 func (e *encoder) writeTextHeader() error {
-
 	err := writeTextLen(e.calcCodeUnitLength(), &e.header)
 	if err == nil {
 		err = e.header.WriteByte(e.pt.StringByte())
@@ -140,6 +139,7 @@ func (e *encoder) calcCodeUnitLength() int64 {
 
 	return int64(l)
 }
+
 func (e *encoder) writeBinaryHeader() error {
 	l := int64(e.calcCodeUnitLength()) // length for packet type
 	b := e.pt.StringByte()
