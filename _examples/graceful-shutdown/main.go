@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"time"
 
-	socketio "github.com/googollee/go-socket.io"
+	socketio "github.com/lixinio/go-socket.io"
 )
 
 const (
@@ -73,7 +73,7 @@ func main() {
 
 	<-done
 
-	//shutdown delay
+	// shutdown delay
 	log.Printf("graceful delay: %v\n", gracefulDelay)
 
 	time.Sleep(gracefulDelay)

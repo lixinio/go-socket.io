@@ -20,7 +20,7 @@ func TestOpError(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		var err = newOpError(test.op, test.err)
+		err := newOpError(test.op, test.err)
 
 		assert.EqualError(err, test.errString)
 

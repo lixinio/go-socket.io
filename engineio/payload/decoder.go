@@ -4,10 +4,9 @@ import (
 	"bufio"
 	"encoding/base64"
 	"io"
-	"io/ioutil"
 
-	"github.com/googollee/go-socket.io/engineio/frame"
-	"github.com/googollee/go-socket.io/engineio/packet"
+	"github.com/lixinio/go-socket.io/engineio/frame"
+	"github.com/lixinio/go-socket.io/engineio/packet"
 )
 
 type byteReader interface {
@@ -74,7 +73,7 @@ func (d *decoder) Read(p []byte) (int, error) {
 }
 
 func (d *decoder) Close() error {
-	if _, err := io.Copy(ioutil.Discard, d); err != nil {
+	if _, err := io.Copy(io.Discard, d); err != nil {
 		return d.sendError(err)
 	}
 	err := d.setNextReader(d.rawReader, d.supportBinary)

@@ -3,15 +3,13 @@ package websocket
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"sync"
 	"time"
 
-	"github.com/googollee/go-socket.io/logger"
 	"github.com/gorilla/websocket"
-
-	"github.com/googollee/go-socket.io/engineio/frame"
-	"github.com/googollee/go-socket.io/engineio/transport"
+	"github.com/lixinio/go-socket.io/engineio/frame"
+	"github.com/lixinio/go-socket.io/engineio/transport"
+	"github.com/lixinio/go-socket.io/logger"
 )
 
 type wrapper struct {
@@ -85,7 +83,7 @@ func (r rcWrapper) Close() error {
 	close(r.quitNag)
 
 	// Attempt to drain the Reader.
-	_, err := io.Copy(ioutil.Discard, r)
+	_, err := io.Copy(io.Discard, r)
 
 	return err
 }

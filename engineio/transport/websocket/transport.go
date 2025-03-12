@@ -8,9 +8,8 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-
-	"github.com/googollee/go-socket.io/engineio/transport"
-	"github.com/googollee/go-socket.io/engineio/transport/utils"
+	"github.com/lixinio/go-socket.io/engineio/transport"
+	"github.com/lixinio/go-socket.io/engineio/transport/utils"
 )
 
 // DialError is the error when dialing to a server. It saves Response from

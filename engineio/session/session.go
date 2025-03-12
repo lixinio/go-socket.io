@@ -8,11 +8,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/googollee/go-socket.io/engineio/frame"
-	"github.com/googollee/go-socket.io/engineio/packet"
-	"github.com/googollee/go-socket.io/engineio/payload"
-	"github.com/googollee/go-socket.io/engineio/transport"
-	"github.com/googollee/go-socket.io/logger"
+	"github.com/lixinio/go-socket.io/engineio/frame"
+	"github.com/lixinio/go-socket.io/engineio/packet"
+	"github.com/lixinio/go-socket.io/engineio/payload"
+	"github.com/lixinio/go-socket.io/engineio/transport"
+	"github.com/lixinio/go-socket.io/logger"
 )
 
 // Pauser is connection which can be paused and resumes.
@@ -113,7 +113,6 @@ func (s *Session) NextReader() (FrameType, io.ReadCloser, error) {
 
 				return err
 			}()
-
 			if err != nil {
 				if closeErr := s.Close(); closeErr != nil {
 					logger.Error("close session:", closeErr)

@@ -60,7 +60,6 @@ func TestPauserTrigger(t *testing.T) {
 		should.True(false, "should not run here")
 	case <-time.After(time.Second / 10):
 	}
-
 }
 
 func TestPauserPauseOnlyOnce(t *testing.T) {
