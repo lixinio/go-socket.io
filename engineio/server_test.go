@@ -1,6 +1,7 @@
 package engineio
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -23,6 +24,7 @@ import (
 func TestEnginePolling(t *testing.T) {
 	should := assert.New(t)
 	must := require.New(t)
+	ctx := context.Background()
 
 	svr := NewServer(nil)
 	defer func() {
@@ -38,7 +40,7 @@ func TestEnginePolling(t *testing.T) {
 	go func() {
 		defer wg.Done()
 
-		conn, err := svr.Accept()
+		conn, err := svr.Accept(ctx)
 		must.NoError(err)
 		defer func() {
 			must.NoError(conn.Close())
@@ -95,6 +97,7 @@ func TestEnginePolling(t *testing.T) {
 func TestEngineWebsocket(t *testing.T) {
 	should := assert.New(t)
 	must := require.New(t)
+	ctx := context.Background()
 
 	svr := NewServer(nil)
 	defer func() {
@@ -113,7 +116,7 @@ func TestEngineWebsocket(t *testing.T) {
 	go func() {
 		defer wg.Done()
 
-		conn, err := svr.Accept()
+		conn, err := svr.Accept(ctx)
 		must.NoError(err)
 
 		defer func() {
@@ -191,6 +194,7 @@ func TestEngineWebsocket(t *testing.T) {
 func TestEngineUpgrade(t *testing.T) {
 	should := assert.New(t)
 	must := require.New(t)
+	ctx := context.Background()
 
 	svr := NewServer(nil)
 	defer func() {
@@ -207,7 +211,7 @@ func TestEngineUpgrade(t *testing.T) {
 	go func() {
 		defer wg.Done()
 
-		conn, err := svr.Accept()
+		conn, err := svr.Accept(ctx)
 		must.NoError(err)
 		defer func() {
 			must.NoError(conn.Close())

@@ -65,7 +65,7 @@ func fmtNS(ns string) string {
 
 func (c *Client) Connect() error {
 	dialer := engineio.Dialer{
-		Transports: []transport.Transport{polling.Default},
+		Transports: []transport.Transport{websocket.Default},
 	}
 
 	enginioCon, err := dialer.Dial(c.url, nil)
@@ -75,15 +75,6 @@ func (c *Client) Connect() error {
 
 	c.conn = newConn(enginioCon, c.handlers)
 
-	if err := c.conn.connectClient(); err != nil {
-		_ = c.Close()
-		if root, ok := c.handlers.Get(rootNamespace); ok && root.onError != nil {
-			root.onError(nil, err)
-		}
-
-		return err
-	}
-
 	go c.clientError()
 	go c.clientWrite()
 	go c.clientRead()
@@ -91,16 +82,38 @@ func (c *Client) Connect() error {
 	return nil
 }
 
+func (c *Client) createNs(ns string) (*namespaceConn, error) {
+	if c.conn == nil {
+		return nil, errors.New("c.conn is empty")
+	}
+
+	conn, err := c.conn.connectClient(ns)
+	if err != nil {
+		_ = c.Close()
+		if root, ok := c.handlers.Get(ns); ok && root.onError != nil {
+			root.onError(nil, err)
+		}
+
+		return nil, err
+	}
+
+	return conn, nil
+}
+
 // Close closes server.
 func (c *Client) Close() error {
 	return c.conn.Close()
 }
 
-func (c *Client) Emit(event string, args ...interface{}) {
-	nsConn, ok := c.conn.namespaces.Get(c.namespace)
+func (c *Client) Emit(ns, event string, args ...interface{}) {
+	var err error
+
+	nsConn, ok := c.conn.namespaces.Get(ns) // c.namespace
 	if !ok {
-		logger.Info("Connection Namespace not initialized")
-		return
+		if nsConn, err = c.createNs(ns); err != nil {
+			logger.Info("Connection Namespace not initialized")
+			return
+		}
 	}
 
 	nsConn.Emit(event, args...)
@@ -137,10 +150,10 @@ func (c *Client) OnError(f func(Conn, error)) {
 }
 
 // OnEvent set a handler function f to handle event for namespace.
-func (c *Client) OnEvent(event string, f interface{}) {
-	h := c.getNamespace(c.namespace)
+func (c *Client) OnEvent(ns, event string, f interface{}) {
+	h := c.getNamespace(ns)
 	if h == nil {
-		h = c.createNamespace(c.namespace)
+		h = c.createNamespace(ns)
 	}
 
 	h.OnEvent(event, f)
@@ -260,14 +273,14 @@ func (c *Client) getNamespace(ns string) *namespaceHandler {
 	return ret
 }
 
-func (c *conn) connectClient() error {
-	rootHandler, ok := c.handlers.Get(rootNamespace)
+func (c *conn) connectClient(ns string) (*namespaceConn, error) {
+	rootHandler, ok := c.handlers.Get(ns)
 	if !ok {
-		return errUnavailableRootHandler
+		return nil, errUnavailableRootHandler
 	}
 
-	root := newNamespaceConn(c, aliasRootNamespace, rootHandler.broadcast)
-	c.namespaces.Set(rootNamespace, root)
+	root := newNamespaceConn(c, ns, rootHandler.broadcast)
+	c.namespaces.Set(ns, root)
 
 	root.Join(root.Conn.ID())
 
@@ -276,8 +289,9 @@ func (c *conn) connectClient() error {
 	})
 
 	header := parser.Header{
-		Type: parser.Connect,
+		Namespace: ns,
+		Type:      parser.Connect,
 	}
 
-	return c.encoder.Encode(header)
+	return root, c.encoder.Encode(header)
 }

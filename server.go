@@ -1,6 +1,7 @@
 package socketio
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
@@ -100,10 +101,10 @@ func (s *Server) OnEvent(namespace, event string, f interface{}) {
 }
 
 // Serve serves go-socket.io server.
-func (s *Server) Serve() error {
+func (s *Server) Serve(ctx context.Context) error {
 	for {
-		conn, err := s.engine.Accept()
-		//todo maybe need check EOF from Accept()
+		conn, err := s.engine.Accept(ctx)
+		// todo maybe need check EOF from Accept()
 		if err != nil {
 			return err
 		}
@@ -193,6 +194,16 @@ func (s *Server) Rooms(namespace string) []string {
 	nspHandler := s.getNamespace(namespace)
 	if nspHandler != nil {
 		return nspHandler.broadcast.Rooms(nil)
+	}
+
+	return nil
+}
+
+// Rooms gives list of one rooms.
+func (s *Server) ConnRooms(namespace string, connection Conn) []string {
+	nspHandler := s.getNamespace(namespace)
+	if nspHandler != nil {
+		return nspHandler.broadcast.Rooms(connection)
 	}
 
 	return nil
