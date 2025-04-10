@@ -1,20 +1,22 @@
 package socketio
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
 	"sync"
 
-	"github.com/gomodule/redigo/redis"
+	"github.com/lixinio/go-socket.io/logger"
+	redis "github.com/redis/go-redis/v9"
 )
 
 // redisBroadcast gives Join, Leave & BroadcastTO server API support to socket.io along with room management
 // map of rooms where each room contains a map of connection id to connections in that room
 type redisBroadcast struct {
-	pub *redis.PubSubConn
-	sub *redis.PubSubConn
+	pub *redis.Client
+	sub *redis.PubSub
 
 	nsp        string
 	uid        string
@@ -80,37 +82,27 @@ type allRoomResponse struct {
 
 func newRedisBroadcast(nsp string, opts *RedisAdapterOptions) (*redisBroadcast, error) {
 	addr := opts.getAddr()
-	var redisOpts []redis.DialOption
-	if len(opts.Password) > 0 {
-		redisOpts = append(redisOpts, redis.DialPassword(opts.Password))
-	}
-	if opts.DB > 0 {
-		redisOpts = append(redisOpts, redis.DialDatabase(opts.DB))
+	redisOpts := &redis.Options{
+		Addr:     addr,
+		Network:  opts.Network,
+		Password: opts.Password,
+		DB:       opts.DB,
 	}
 
-	pub, err := redis.Dial(opts.Network, addr, redisOpts...)
-	if err != nil {
+	redisCli := redis.NewClient(redisOpts)
+	ctx := context.TODO()
+	if err := redisCli.Ping(ctx).Err(); err != nil {
 		return nil, err
 	}
 
-	sub, err := redis.Dial(opts.Network, addr, redisOpts...)
-	if err != nil {
-		return nil, err
-	}
-
-	subConn := &redis.PubSubConn{Conn: sub}
-	pubConn := &redis.PubSubConn{Conn: pub}
-
-	if err = subConn.PSubscribe(fmt.Sprintf("%s#%s#*", opts.Prefix, nsp)); err != nil {
-		return nil, err
-	}
+	subConn := redisCli.PSubscribe(ctx, fmt.Sprintf("%s#%s#*", opts.Prefix, nsp))
 
 	uid := newV4UUID()
 	rbc := &redisBroadcast{
 		rooms:      make(map[string]map[string]Conn),
 		requests:   make(map[string]interface{}),
 		sub:        subConn,
-		pub:        pubConn,
+		pub:        redisCli,
 		key:        fmt.Sprintf("%s#%s#%s", opts.Prefix, nsp, uid),
 		reqChannel: fmt.Sprintf("%s-request#%s", opts.Prefix, nsp),
 		resChannel: fmt.Sprintf("%s-response#%s", opts.Prefix, nsp),
@@ -118,7 +110,7 @@ func newRedisBroadcast(nsp string, opts *RedisAdapterOptions) (*redisBroadcast, 
 		uid:        uid,
 	}
 
-	if err = subConn.Subscribe(rbc.reqChannel, rbc.resChannel); err != nil {
+	if err := subConn.Subscribe(ctx, rbc.reqChannel, rbc.resChannel); err != nil {
 		return nil, err
 	}
 
@@ -141,7 +133,7 @@ func (bc *redisBroadcast) AllRooms() []string {
 	req.done = make(chan bool, 1)
 
 	bc.requests[req.RequestID] = &req
-	_, err := bc.pub.Conn.Do("PUBLISH", bc.reqChannel, reqJSON)
+	_, err := bc.pub.Publish(context.TODO(), bc.reqChannel, reqJSON).Result()
 	if err != nil {
 		return []string{} // if error occurred,return empty
 	}
@@ -272,7 +264,7 @@ func (bc *redisBroadcast) Len(room string) int {
 	req.done = make(chan bool, 1)
 
 	bc.requests[req.RequestID] = &req
-	_, err = bc.pub.Conn.Do("PUBLISH", bc.reqChannel, reqJSON)
+	_, err = bc.pub.Publish(context.TODO(), bc.reqChannel, reqJSON).Result()
 	if err != nil {
 		return -1
 	}
@@ -301,11 +293,13 @@ func (bc *redisBroadcast) onMessage(channel string, msg []byte) error {
 	channelParts := strings.Split(channel, "#")
 	nsp := channelParts[len(channelParts)-2]
 	if bc.nsp != nsp {
+		logger.Info("[redisBroadcast] onMessage nsp dismatch", bc.nsp, nsp)
 		return nil
 	}
 
 	uid := channelParts[len(channelParts)-1]
 	if bc.uid == uid {
+		// logger.Info("[redisBroadcast] onMessage uid dismatch", bc.uid, uid)
 		return nil
 	}
 
@@ -328,6 +322,8 @@ func (bc *redisBroadcast) onMessage(channel string, msg []byte) error {
 		return errors.New("invalid event")
 	}
 
+	logger.Info("[redisBroadcast] onMessage recv message", room, event)
+
 	if room != "" {
 		bc.send(room, event, args...)
 	} else {
@@ -339,16 +335,15 @@ func (bc *redisBroadcast) onMessage(channel string, msg []byte) error {
 
 // Get the number of subscribers of a channel.
 func (bc *redisBroadcast) getNumSub(channel string) (int, error) {
-	rs, err := bc.pub.Conn.Do("PUBSUB", "NUMSUB", channel)
+	rs, err := bc.pub.PubSubNumSub(context.TODO(), channel).Result()
 	if err != nil {
 		return 0, err
 	}
 
-	numSub64, ok := rs.([]interface{})[1].(int64)
-	if !ok {
-		return 0, errors.New("redis reply cast to int error")
+	for _, numSub := range rs {
+		return int(numSub), nil
 	}
-	return int(numSub64), nil
+	return 0, nil
 }
 
 // Handle request from redis channel.
@@ -393,7 +388,7 @@ func (bc *redisBroadcast) publish(channel string, msg interface{}) {
 		return
 	}
 
-	_, err = bc.pub.Conn.Do("PUBLISH", channel, resJSON)
+	_, err = bc.pub.Publish(context.TODO(), channel, resJSON).Result()
 	if err != nil {
 		return
 	}
@@ -473,6 +468,7 @@ func (bc *redisBroadcast) send(room string, event string, args ...interface{}) {
 
 	connections, ok := bc.rooms[room]
 	if !ok {
+		// logger.Info("[redisBroadcast] send root conns not found, room", room)
 		return
 	}
 
@@ -495,7 +491,7 @@ func (bc *redisBroadcast) publishMessage(room string, event string, args ...inte
 		return
 	}
 
-	_, err = bc.pub.Conn.Do("PUBLISH", bc.key, bcMessageJSON)
+	_, err = bc.pub.Publish(context.TODO(), bc.key, bcMessageJSON).Result()
 	if err != nil {
 		return
 	}
@@ -537,28 +533,33 @@ func (bc *redisBroadcast) getRoomsByConn(connection Conn) []string {
 }
 
 func (bc *redisBroadcast) dispatch() {
-	for {
-		switch m := bc.sub.Receive().(type) {
-		case redis.Message:
-			if m.Channel == bc.reqChannel {
-				bc.onRequest(m.Data)
-				break
-			} else if m.Channel == bc.resChannel {
-				bc.onResponse(m.Data)
-				break
+	ch := bc.sub.ChannelWithSubscriptions()
+	for rec := range ch {
+		switch m := rec.(type) {
+		case *redis.Message:
+			switch m.Channel {
+			case bc.reqChannel:
+				bc.onRequest([]byte(m.Payload))
+				continue
+			case bc.resChannel:
+				bc.onResponse([]byte(m.Payload))
+				continue
+			default:
+				err := bc.onMessage(m.Channel, []byte(m.Payload))
+				if err != nil {
+					logger.Error(fmt.Sprintf(
+						"[redisBroadcast] onMessage fail, channel '%s'", m.Channel,
+					), err)
+					return
+				}
 			}
-
-			err := bc.onMessage(m.Channel, m.Data)
-			if err != nil {
-				return
-			}
-
-		case redis.Subscription:
+		case *redis.Subscription:
 			if m.Count == 0 {
+				logger.Info("onMessage redis.Subscription == 0")
 				return
 			}
-
 		case error:
+			logger.Error("ChannelWithSubscriptions fail", m)
 			return
 		}
 	}
