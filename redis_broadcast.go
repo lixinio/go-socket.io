@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/gomodule/redigo/redis"
+	"github.com/lixinio/go-socket.io/logger"
 )
 
 // redisBroadcast gives Join, Leave & BroadcastTO server API support to socket.io along with room management
@@ -301,11 +302,13 @@ func (bc *redisBroadcast) onMessage(channel string, msg []byte) error {
 	channelParts := strings.Split(channel, "#")
 	nsp := channelParts[len(channelParts)-2]
 	if bc.nsp != nsp {
+		logger.Info("[redisBroadcast] onMessage nsp dismatch", bc.nsp, nsp)
 		return nil
 	}
 
 	uid := channelParts[len(channelParts)-1]
 	if bc.uid == uid {
+		logger.Info("[redisBroadcast] onMessage uid dismatch", bc.uid, uid)
 		return nil
 	}
 
@@ -327,6 +330,8 @@ func (bc *redisBroadcast) onMessage(channel string, msg []byte) error {
 	if !ok {
 		return errors.New("invalid event")
 	}
+
+	logger.Info("[redisBroadcast] onMessage recv message", room, event)
 
 	if room != "" {
 		bc.send(room, event, args...)
@@ -473,6 +478,7 @@ func (bc *redisBroadcast) send(room string, event string, args ...interface{}) {
 
 	connections, ok := bc.rooms[room]
 	if !ok {
+		logger.Info("[redisBroadcast] send root conns not found, room", room)
 		return
 	}
 
@@ -550,6 +556,7 @@ func (bc *redisBroadcast) dispatch() {
 
 			err := bc.onMessage(m.Channel, m.Data)
 			if err != nil {
+				logger.Info("[redisBroadcast] onMessage channel", m.Channel, "fail, err ", err.Error())
 				return
 			}
 
